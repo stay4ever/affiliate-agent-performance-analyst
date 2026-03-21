@@ -1,0 +1,33 @@
+name: PerformanceAnalyst
+tagline: "Turn your affiliate data into actionable optimization insights"
+description: |
+  PerformanceAnalyst is an autonomous AI agent that analyzes your affiliate marketing
+  data, calculates ROI, identifies top and bottom performers, and delivers specific
+  optimization recommendations backed by data.
+category: Marketing
+tags: [affiliate-marketing, analytics, roi-analysis, performance-optimization, data-analysis]
+pricing:
+  model: per_run
+  estimated_cost: "$0.20 - $0.80 per run"
+  billing: "Charged per API usage"
+capabilities:
+  - Performance data analysis (CSV, JSON, or any tabular format)
+  - ROI calculation with break-even analysis
+  - KPI benchmarking (CTR, conversion rate, EPC, RPM, AOV)
+  - Top/bottom performer identification
+  - Revenue forecasting
+  - Actionable optimization recommendations
+inputs:
+  - name: data_file
+    type: string
+    required: true
+    description: "Path to performance data file (CSV, JSON)"
+  - name: period
+    type: string
+    required: false
+    default: "last 30 days"
+outputs:
+  - "Performance report with KPI analysis"
+  - "ROI calculation with projections"
+  - "Ranked optimization recommendations"
+github: "https://github.com/stay4ever/affiliate-agent-performance-analyst"

@@ -1,0 +1,34 @@
+[build-system]
+requires = ["setuptools>=68.0", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "affiliate-agent-performance-analyst"
+version = "0.1.0"
+description = "AI-powered affiliate marketing performance analysis agent"
+readme = "README.md"
+license = {text = "MIT"}
+requires-python = ">=3.10"
+authors = [
+    {name = "stay4ever"},
+]
+keywords = ["affiliate", "marketing", "analytics", "ai-agent", "performance"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "License :: OSI Approved :: MIT License",
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "Programming Language :: Python :: 3.12",
+    "Topic :: Office/Business",
+]
+dependencies = [
+    "affiliate-agent-core",
+]
+
+[project.scripts]
+performance-analyst = "affiliate_agent_performance_analyst.entry:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]

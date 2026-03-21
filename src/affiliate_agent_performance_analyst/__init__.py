@@ -1,0 +1,5 @@
+"""PerformanceAnalyst - AI-powered affiliate marketing analytics agent."""
+__version__ = "0.1.0"
+AGENT_NAME = "PerformanceAnalyst"
+AGENT_DESCRIPTION = "Analyzes affiliate marketing performance data and provides optimization recommendations"
+PRICE_PER_RUN = "$0.20 - $0.80"
