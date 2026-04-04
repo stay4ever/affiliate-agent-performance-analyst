@@ -1,0 +1,12 @@
+{
+  "category": "general",
+  "credits_per_run": 1,
+  "description": "AI agent deployed from stay4ever/affiliate-agent-performance-analyst",
+  "input_schema": {
+    "fields": []
+  },
+  "name": "Affiliate Agent Performance Analyst",
+  "platform": "nanoplasticity",
+  "tools": [],
+  "version": "1.0.0"
+}
