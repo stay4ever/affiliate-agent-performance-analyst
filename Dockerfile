@@ -1,25 +1,8 @@
 # ──────────────────────────────────────────────────────────────────────────────
 # Production Dockerfile — affiliate-agent-performance-analyst
-# Multi-stage build: builder installs deps, final image is minimal.
+# Single-stage build: clean, reliable, proven to match the CI install path.
 # ──────────────────────────────────────────────────────────────────────────────
 
-# ── Stage 1: builder ──────────────────────────────────────────────────────────
-FROM python:3.12-slim AS builder
-
-WORKDIR /build
-
-# Install build tooling (quotes required — shell treats >= as redirect otherwise)
-RUN pip install --no-cache-dir "hatchling>=1.24.0"
-
-# Copy only the files needed to resolve & install dependencies first
-# (layer-caches pip install unless pyproject.toml changes)
-COPY pyproject.toml .
-COPY src/ src/
-
-# Install the package and all runtime dependencies into a prefix directory
-RUN pip install --no-cache-dir --prefix=/install .
-
-# ── Stage 2: final runtime image ──────────────────────────────────────────────
 FROM python:3.12-slim
 
 # Non-root user for security
@@ -27,11 +10,14 @@ RUN addgroup --system agent && adduser --system --ingroup agent agent
 
 WORKDIR /app
 
-# Copy installed packages from builder stage
-COPY --from=builder /install /usr/local
+# Copy package definition first (layer-caches pip install unless pyproject.toml changes)
+COPY pyproject.toml .
+COPY src/ src/
 
-# Copy source so the package is importable in editable-equivalent fashion
-COPY --from=builder /build/src /app/src
+# Install the package + all runtime dependencies
+RUN pip install --no-cache-dir "hatchling>=1.24.0" \
+ && pip install --no-cache-dir . \
+ && pip cache purge
 
 # Default output directory (mountable volume in production)
 RUN mkdir -p /app/output && chown -R agent:agent /app
