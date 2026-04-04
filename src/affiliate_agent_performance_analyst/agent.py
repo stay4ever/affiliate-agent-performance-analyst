@@ -1,6 +1,8 @@
 """PerformanceAnalyst agent definition and system prompt."""
 
-from . import AGENT_NAME, AGENT_DESCRIPTION, __version__
+# Import from _constants.py — NOT from __init__.py — to avoid the circular import:
+#   agent.py -> __init__.py -> entry.py -> agent.py  ☠️
+from ._constants import AGENT_NAME, AGENT_DESCRIPTION, __version__
 
 SYSTEM_PROMPT = """You are PerformanceAnalyst, an expert AI agent specializing in affiliate marketing
 performance analysis. You excel at turning raw performance data into actionable insights
