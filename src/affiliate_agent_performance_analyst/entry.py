@@ -1,12 +1,30 @@
 """Entry point for the PerformanceAnalyst agent."""
 
+from __future__ import annotations
+
 import asyncio
 import json
+import logging
 import os
 import sys
 
-from .agent import SYSTEM_PROMPT, get_agent_definition
-from .tools import calculate_affiliate_roi, generate_performance_report
+from dotenv import load_dotenv
+
+load_dotenv()
+
+from .agent import SYSTEM_PROMPT, get_agent_definition  # noqa: F401, E402
+from .tools import calculate_affiliate_roi, generate_performance_report  # noqa: E402
+
+# ---------------------------------------------------------------------------
+# Logging — configured from LOG_LEVEL env var so production log aggregators
+# can control verbosity without rebuilding the image.
+# ---------------------------------------------------------------------------
+logging.basicConfig(
+    level=os.getenv("LOG_LEVEL", "INFO").upper(),
+    format="%(asctime)s %(levelname)s %(name)s — %(message)s",
+    datefmt="%Y-%m-%dT%H:%M:%S",
+)
+logger = logging.getLogger(__name__)
 
 
 async def run_performance_analyst(
@@ -33,10 +51,10 @@ async def run_performance_analyst(
     agent_def = get_agent_definition()
 
     if verbose:
-        print(f"Agent: {agent_def['name']} v{agent_def['version']}")
-        print(f"Data file: {data_file}")
-        print(f"Period: {period}")
-        print(f"Output dir: {output_dir}")
+        logger.info("Agent: %s v%s", agent_def["name"], agent_def["version"])
+        logger.info("Data file: %s", data_file)
+        logger.info("Period: %s", period)
+        logger.info("Output dir: %s", output_dir)
 
     # Validate data file exists
     if not os.path.exists(data_file):
@@ -86,7 +104,7 @@ Focus on:
             )
     except (json.JSONDecodeError, TypeError, ValueError):
         if verbose:
-            print("Could not auto-extract ROI from data; skipping ROI calculation.")
+            logger.warning("Could not auto-extract ROI from data; skipping ROI calculation.")
 
     # Prepare output
     os.makedirs(output_dir, exist_ok=True)
@@ -104,14 +122,12 @@ Focus on:
     with open(output_path, "w") as f:
         json.dump(output, f, indent=2)
 
-    if verbose:
-        print(f"Report saved to: {output_path}")
-
+    logger.info("Report saved to: %s", output_path)
     return output
 
 
-def main():
-    """CLI entry point for the PerformanceAnalyst agent."""
+def cli() -> None:
+    """CLI entry point for the PerformanceAnalyst agent (matches pyproject.toml scripts)."""
     if len(sys.argv) < 2:
         print("Usage: performance-analyst <data_file> [--period PERIOD] [--verbose]")
         print()
@@ -151,5 +167,8 @@ def main():
         print(json.dumps(result, indent=2))
 
 
+# Keep `main` as an alias so any external scripts importing it don't break
+main = cli
+
 if __name__ == "__main__":
-    main()
+    cli()
