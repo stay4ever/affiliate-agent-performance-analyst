@@ -1,23 +1,32 @@
 # ──────────────────────────────────────────────────────────────────────────────
 # Production Dockerfile — affiliate-agent-performance-analyst
-# Single-stage build: clean, reliable, proven to match the CI install path.
 # ──────────────────────────────────────────────────────────────────────────────
 
 FROM python:3.12-slim
+
+# Install build essentials needed by some transitive deps
+RUN apt-get update && apt-get install -y --no-install-recommends \
+        gcc \
+        libffi-dev \
+    && rm -rf /var/lib/apt/lists/*
 
 # Non-root user for security
 RUN addgroup --system agent && adduser --system --ingroup agent agent
 
 WORKDIR /app
 
-# Copy package definition first (layer-caches pip install unless pyproject.toml changes)
+# Upgrade pip + install hatchling build backend first (required by pyproject.toml)
+RUN pip install --no-cache-dir --upgrade pip hatchling
+
+# Copy package definition + source
 COPY pyproject.toml .
 COPY src/ src/
 
-# Install the package + all runtime dependencies
-RUN pip install --no-cache-dir "hatchling>=1.24.0" \
- && pip install --no-cache-dir . \
- && pip cache purge
+# Install the package and all pinned runtime dependencies in one shot
+RUN pip install --no-cache-dir .
+
+# Verify the CLI entrypoint is wired correctly
+RUN performance-analyst --help
 
 # Default output directory (mountable volume in production)
 RUN mkdir -p /app/output && chown -R agent:agent /app
