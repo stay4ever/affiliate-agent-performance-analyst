@@ -8,8 +8,8 @@ FROM python:3.12-slim AS builder
 
 WORKDIR /build
 
-# Install build tooling
-RUN pip install --no-cache-dir hatchling>=1.24.0
+# Install build tooling (quotes required — shell treats >= as redirect otherwise)
+RUN pip install --no-cache-dir "hatchling>=1.24.0"
 
 # Copy only the files needed to resolve & install dependencies first
 # (layer-caches pip install unless pyproject.toml changes)
