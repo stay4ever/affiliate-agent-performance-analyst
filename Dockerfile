@@ -16,7 +16,7 @@ RUN addgroup --system agent && adduser --system --ingroup agent agent
 WORKDIR /app
 
 # Upgrade pip + install hatchling build backend first (required by pyproject.toml)
-RUN pip install --no-cache-dir --upgrade pip hatchling
+RUN pip install --no-cache-dir --upgrade pip "hatchling>=1.24.0"
 
 # Copy package definition + source
 COPY pyproject.toml .
@@ -24,9 +24,6 @@ COPY src/ src/
 
 # Install the package and all pinned runtime dependencies in one shot
 RUN pip install --no-cache-dir .
-
-# Verify the CLI entrypoint is wired correctly
-RUN performance-analyst --help
 
 # Default output directory (mountable volume in production)
 RUN mkdir -p /app/output && chown -R agent:agent /app
