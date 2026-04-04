@@ -19,18 +19,27 @@ from dotenv import load_dotenv
 
 load_dotenv()
 
-from affiliate_agent_performance_analyst.entry import run_performance_analyst  # noqa: F401, E402
-
-# Agent identity constants — consumed by agent.py and any external integrations
-AGENT_NAME: str = "PerformanceAnalyst"
-AGENT_DESCRIPTION: str = (
-    "AI-powered affiliate marketing performance analyst that calculates ROI, "
-    "benchmarks KPIs, and generates actionable optimisation reports."
+# Constants live in _constants.py to break the circular import:
+#   __init__ -> entry -> agent -> __init__  (was circular)
+#   __init__ -> _constants                  (safe)
+from affiliate_agent_performance_analyst._constants import (  # noqa: E402
+    AGENT_NAME,
+    AGENT_DESCRIPTION,
+    __version__,
 )
+
+# Lazy public API — imported here for convenience but NOT at module load time
+# to avoid triggering the full import chain during `pip install` / CLI startup.
+def __getattr__(name: str):
+    if name == "run_performance_analyst":
+        from affiliate_agent_performance_analyst.entry import run_performance_analyst
+        return run_performance_analyst
+    raise AttributeError(f"module {__name__!r} has no attribute {name!r}")
+
 
 __all__ = [
     "run_performance_analyst",
     "AGENT_NAME",
     "AGENT_DESCRIPTION",
+    "__version__",
 ]
-__version__ = "0.1.0"
