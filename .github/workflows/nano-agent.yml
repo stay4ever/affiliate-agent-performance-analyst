@@ -25,12 +25,12 @@ jobs:
       - uses: actions/setup-python@v5
         with:
           python-version: '3.11'
-      - name: Install dependencies
-        run: pip install -r requirements.txt
+      - name: Install Python dependencies
+        run: pip install -r requirements.txt 2>/dev/null || true
       - name: Run agent
         env:
           TASK: ${{ inputs.task }}
           RUN_ID: ${{ inputs.run_id }}
           CALLBACK_URL: ${{ inputs.callback_url }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        run: python agent.py
+        run: python agent.* 2>/dev/null || python main.* 2>/dev/null || python run.*
