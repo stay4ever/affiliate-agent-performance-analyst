@@ -10,6 +10,9 @@ on:
         required: false
         default: "deploy"
 
+permissions:
+  contents: read
+
 env:
   OPENAI_MODEL: gpt-4o
 
@@ -25,9 +28,9 @@ jobs:
       - name: Install dependencies
         run: pip install ".[dev]"
       - name: Lint
-        run: ruff check src/ || true
+        run: ruff check src/
       - name: Test
-        run: pytest tests/ -v || true
+        run: pytest tests/ -v
 
   build:
     name: Build Docker Image
@@ -38,7 +41,7 @@ jobs:
       - name: Build image
         run: docker build -t affiliate-agent-performance-analyst:latest .
       - name: Smoke test
-        run: docker run --rm affiliate-agent-performance-analyst:latest || true
+        run: docker run --rm affiliate-agent-performance-analyst:latest
 
   deploy:
     name: Deploy
@@ -52,7 +55,7 @@ jobs:
       - name: Install
         run: pip install .
       - name: Verify CLI
-        run: performance-analyst --help || true
+        run: performance-analyst --help
       - name: Run agent (smoke)
         env:
           OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}

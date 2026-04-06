@@ -8,12 +8,8 @@ import logging
 import os
 import sys
 
-from dotenv import load_dotenv
-
-load_dotenv()
-
-from .agent import SYSTEM_PROMPT, get_agent_definition  # noqa: F401, E402
-from .tools import calculate_affiliate_roi, generate_performance_report  # noqa: E402
+from .agent import SYSTEM_PROMPT, get_agent_definition  # noqa: F401
+from .tools import calculate_affiliate_roi, generate_performance_report
 
 # ---------------------------------------------------------------------------
 # Logging — configured from LOG_LEVEL env var so production log aggregators
@@ -25,6 +21,32 @@ logging.basicConfig(
     datefmt="%Y-%m-%dT%H:%M:%S",
 )
 logger = logging.getLogger(__name__)
+
+# ---------------------------------------------------------------------------
+# Security — base directories that data_file and output_dir must reside in.
+# Override via DATA_BASE_DIR / OUTPUT_BASE_DIR env vars for deployment.
+# ---------------------------------------------------------------------------
+_DATA_BASE_DIR = os.path.realpath(
+    os.environ.get("DATA_BASE_DIR", os.getcwd())
+)
+_OUTPUT_BASE_DIR = os.path.realpath(
+    os.environ.get("OUTPUT_BASE_DIR", os.getcwd())
+)
+
+
+def _validate_path_within(path: str, base_dir: str, label: str) -> str:
+    """Resolve *path* and ensure it is within *base_dir*.
+
+    Returns the resolved absolute path, or raises ValueError on traversal.
+    """
+    resolved = os.path.realpath(path)
+    # Ensure the resolved path starts with the base directory.
+    if not resolved.startswith(base_dir + os.sep) and resolved != base_dir:
+        raise ValueError(
+            f"{label} path '{path}' resolves outside the allowed base "
+            f"directory '{base_dir}'"
+        )
+    return resolved
 
 
 async def run_performance_analyst(
@@ -48,23 +70,28 @@ async def run_performance_analyst(
     Returns:
         A dictionary containing the analysis results.
     """
+    # ── Path-traversal guards ─────────────────────────────────────────────
+    safe_data_file = _validate_path_within(data_file, _DATA_BASE_DIR, "data_file")
+    safe_output_dir = _validate_path_within(output_dir, _OUTPUT_BASE_DIR, "output_dir")
+
     agent_def = get_agent_definition()
 
     if verbose:
         logger.info("Agent: %s v%s", agent_def["name"], agent_def["version"])
-        logger.info("Data file: %s", data_file)
+        logger.info("Data file: %s", safe_data_file)
         logger.info("Period: %s", period)
-        logger.info("Output dir: %s", output_dir)
+        logger.info("Output dir: %s", safe_output_dir)
 
     # Validate data file exists
-    if not os.path.exists(data_file):
-        raise FileNotFoundError(f"Data file not found: {data_file}")
+    if not os.path.exists(safe_data_file):
+        raise FileNotFoundError(f"Data file not found: {safe_data_file}")
 
     # Read data file
-    with open(data_file, "r") as f:
+    with open(safe_data_file, "r") as f:
         raw_data = f.read()
 
-    # Build the analysis prompt
+    # Build the analysis prompt — output_dir is NOT interpolated to prevent
+    # injection of arbitrary paths into the LLM context.
     prompt = f"""Analyze the following affiliate marketing performance data for the period: {period}
 
 Data file contents:
@@ -76,7 +103,6 @@ Instructions:
 3. Identify the top 3 performing affiliates/campaigns and the bottom 3.
 4. Provide at least 5 specific, actionable optimization recommendations.
 5. Each recommendation should reference specific data points and include expected outcomes.
-6. Save the complete report to {output_dir}/performance_report.json
 
 Focus on:
 - Which affiliates/campaigns are driving the most value?
@@ -107,18 +133,18 @@ Focus on:
             logger.warning("Could not auto-extract ROI from data; skipping ROI calculation.")
 
     # Prepare output
-    os.makedirs(output_dir, exist_ok=True)
+    os.makedirs(safe_output_dir, exist_ok=True)
     output = {
         "agent": agent_def["name"],
         "version": agent_def["version"],
-        "data_file": data_file,
+        "data_file": os.path.basename(safe_data_file),
         "period": period,
         "prompt": prompt,
         "report": report,
         "roi": roi_result,
     }
 
-    output_path = os.path.join(output_dir, "performance_report.json")
+    output_path = os.path.join(safe_output_dir, "performance_report.json")
     with open(output_path, "w") as f:
         json.dump(output, f, indent=2)
 

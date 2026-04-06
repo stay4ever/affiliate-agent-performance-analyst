@@ -14,11 +14,6 @@ Public API
 
 from __future__ import annotations
 
-# Load .env before any other imports so env vars are available everywhere
-from dotenv import load_dotenv
-
-load_dotenv()
-
 # Constants live in _constants.py to break the circular import:
 #   __init__ -> entry -> agent -> __init__  (was circular)
 #   __init__ -> _constants                  (safe)
