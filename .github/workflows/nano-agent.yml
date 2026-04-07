@@ -27,13 +27,26 @@ jobs:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: '3.11'
+          python-version: '3.12'
       - name: Install Python dependencies
-        run: pip install -r requirements.txt 2>/dev/null || true
+        run: pip install -r requirements.txt
+      - name: Validate secrets
+        env:
+          ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
+        run: |
+          if [ -z "$ANTHROPIC_API_KEY" ]; then
+            echo "::error::ANTHROPIC_API_KEY secret is not set"
+            exit 1
+          fi
+      - name: Validate callback URL
+        if: inputs.callback_url != ''
+        run: |
+          echo "${{ inputs.callback_url }}" | grep -qE '^https://' || \
+            (echo "::error::callback_url must be HTTPS"; exit 1)
       - name: Run agent
         env:
           TASK: ${{ inputs.task }}
           RUN_ID: ${{ inputs.run_id }}
           CALLBACK_URL: ${{ inputs.callback_url }}
           ANTHROPIC_API_KEY: ${{ secrets.ANTHROPIC_API_KEY }}
-        run: python agent.* 2>/dev/null || python main.* 2>/dev/null || python run.*
+        run: python agent.py

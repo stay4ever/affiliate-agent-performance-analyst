@@ -56,9 +56,7 @@ jobs:
         run: pip install .
       - name: Verify CLI
         run: performance-analyst --help
-      - name: Run agent (smoke)
-        env:
-          OPENAI_API_KEY: ${{ secrets.OPENAI_API_KEY }}
-          OPENAI_MODEL: ${{ env.OPENAI_MODEL }}
-          LOG_LEVEL: INFO
-        run: echo "Agent deployed successfully. Ready to accept data files."
+      - name: Validate nanoplasticity.json
+        run: python3 -m json.tool nanoplasticity.json > /dev/null
+      - name: Verify agent entrypoint
+        run: python3 -c "import agent; print('agent.py importable')"
